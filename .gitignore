@@ -1,0 +1,47 @@
+ Environment & Local
+.env
+.venv
+venv/
+ENV/
+env/
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+build/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Data & Logs
+data/app.db
+data/*.db
+logs/
+airflow/logs/
+airflow/airflow.db
+*.log
+
+# Airflow
+airflow_home/
+airflow.cfg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project specific
+*.sqlite
+*.sqlite3
+.tmp/
+temp/

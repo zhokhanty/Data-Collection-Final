@@ -1,0 +1,6 @@
+apache-airflow==2.7.3
+pendulum==3.0.0 
+kafka-python 
+requests 
+pandas 
+python-dotenv
