@@ -4,10 +4,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 # Directories
-PROJECT_ROOT = Path(__file__).parent
-DATA_DIR = PROJECT_ROOT / 'data'
-LOGS_DIR = PROJECT_ROOT / 'logs'
+DATA_DIR = PROJECT_ROOT / 'src/data'
+LOGS_DIR = PROJECT_ROOT / 'src/logs'
 AIRFLOW_HOME = PROJECT_ROOT / 'airflow'
 
 # Ensure directories exist
@@ -16,16 +17,22 @@ LOGS_DIR.mkdir(exist_ok=True)
 AIRFLOW_HOME.mkdir(exist_ok=True)
 
 # DB config
-DB_PATH = str(DATA_DIR / 'app.db')
+DB_PATH = DATA_DIR / 'app.db'
+DB_PATH.touch(exist_ok=True)
 DB_URL = f'sqlite:///{DB_PATH}'
 
 # Kafka config
 KAFKA_BROKER = os.getenv('KAFKA_BROKER', 'localhost:9092')
 KAFKA_BOOTSTRAP_SERVERS = [KAFKA_BROKER]
-KAFKA_TOPIC_RAW = 'raw_events'
+KAFKA_TOPIC_RAW = "gdacs_raw"
+KAFKA_TOPIC_CLEAN = "gdacs_clean"
+KAFKA_TOPIC_ANALYTICS = "gdacs_analytics"
 KAFKA_CONSUMER_GROUP = 'batch_cleaner'
 KAFKA_AUTO_OFFSET_RESET = 'earliest'
 KAFKA_CONSUMER_TIMEOUT_MS = 10000
+
+KAFKA_CONSUMER_GROUP_RAW = "gdacs_raw_group"
+KAFKA_CONSUMER_GROUP_CLEAN = "gdacs_clean_group"
 
 API_URL = (
     "https://www.gdacs.org/gdacsapi/api/Events/"

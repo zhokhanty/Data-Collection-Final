@@ -1,6 +1,8 @@
-apache-airflow==2.7.3
+apache-airflow==2.8.1
 pendulum==3.0.0 
 kafka-python 
 requests 
 pandas 
 python-dotenv
+apache-airflow-providers-sqlite
+apache-airflow-providers-kafka

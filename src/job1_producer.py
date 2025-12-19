@@ -12,7 +12,7 @@ from config import (
    RETRY_DELAY_SECONDS,
    DEBUG
 )
-from src.kafka_utils import create_producer, send_to_kafka
+from kafka_utils import create_producer, send_to_kafka
 
 # Setup logging
 logging.basicConfig(
@@ -23,34 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 def fetch_from_api(retry_count: int = 0) -> List[Dict]:
-   """
-   Fetch raw event data from GDACS API.
-   
-   The GDACS API returns GeoJSON format with disaster events:
-   - Earthquakes (EQ)
-   - Tropical Cyclones (TC)
-   - Floods (FL)
-   - Droughts (DR)
-   - Volcanoes (VO)
-   - Wildfires (WF)
-   
-   Args:
-      retry_count: Current retry attempt (used internally)
-   
-   Returns:
-      List of event features from API, empty list if API fails
-   
-   Example:
-      events = fetch_from_api()
-      # Returns: [
-      #     {
-      #         "type": "Feature",
-      #         "properties": {"eventid": "123", "eventtype": "EQ", ...},
-      #         "geometry": {"type": "Point", "coordinates": [lon, lat]}
-      #     },
-      #     ...
-      # ]
-   """
    try:
       logger.info(f"Fetching from GDACS API: {API_URL}")
       
@@ -63,18 +35,14 @@ def fetch_from_api(retry_count: int = 0) -> List[Dict]:
          }
       )
       
-      # Check if request was successful
       response.raise_for_status()
       
-      # Parse JSON response
       data = response.json()
       
-      # Validate response structure
       if not isinstance(data, dict):
          logger.error(f"Invalid API response format: {type(data)}")
          return []
       
-      # Extract features (events)
       features = data.get("features", [])
       
       if not features:
@@ -113,16 +81,6 @@ def fetch_from_api(retry_count: int = 0) -> List[Dict]:
 
 
 def handle_retry(retry_count: int, error_msg: str) -> List[Dict]:
-   """
-   Handle retries for failed API calls.
-   
-   Args:
-      retry_count: Current retry attempt
-      error_msg: Error message
-   
-   Returns:
-      Empty list if max retries exceeded, otherwise retries
-   """
    if retry_count < MAX_RETRIES:
       retry_count += 1
       wait_time = RETRY_DELAY_SECONDS * retry_count
@@ -139,21 +97,6 @@ def handle_retry(retry_count: int, error_msg: str) -> List[Dict]:
 
 
 def send_events_to_kafka(events: List[Dict], topic: str = "raw_events") -> int:
-   """
-   Send raw events to Kafka topic.
-   
-   Args:
-      events: List of event dictionaries from API
-      topic: Kafka topic name (default: "raw_events")
-   
-   Returns:
-      Number of events successfully sent to Kafka
-   
-   Example:
-      events = fetch_from_api()
-      count = send_events_to_kafka(events)
-      print(f"Sent {count} events to Kafka")
-   """
    if not events:
       logger.warning("No events to send to Kafka")
       return 0
@@ -170,39 +113,12 @@ def send_events_to_kafka(events: List[Dict], topic: str = "raw_events") -> int:
 
 
 def run_producer(once: bool = False) -> Dict:
-   """
-   Main producer function - fetch API and send to Kafka.
-   
-   This function is called by Airflow and runs continuously when
-   scheduled with a short interval (e.g., every minute).
-   
-   Args:
-      once: If True, run once and return. If False, retry on failure.
-            (Airflow tasks are scheduled, so once=True is typical)
-   
-   Returns:
-      Dictionary with execution stats:
-      {
-         'timestamp': '2025-01-15T10:30:00Z',
-         'total_fetched': 10,
-         'total_sent': 10,
-         'failed': 0,
-         'status': 'success'
-      }
-   
-   Example:
-      # Airflow calls this
-      result = run_producer(once=True)
-      print(result)
-      # {'timestamp': '...', 'total_fetched': 10, 'total_sent': 10, ...}
-   """
    start_time = datetime.utcnow()
    logger.info("=" * 80)
    logger.info("STARTING DATA INGESTION JOB (Job 1)")
    logger.info("=" * 80)
    
    try:
-      # Fetch from API
       logger.info("Step 1: Fetching data from GDACS API...")
       events = fetch_from_api()
       total_fetched = len(events)
@@ -210,23 +126,21 @@ def run_producer(once: bool = False) -> Dict:
       if total_fetched == 0:
          logger.warning("No events fetched from API")
          return {
-               'timestamp': start_time.isoformat(),
-               'total_fetched': 0,
-               'total_sent': 0,
-               'failed': 0,
-               'status': 'no_data'
+            'timestamp': start_time.isoformat(),
+            'total_fetched': 0,
+            'total_sent': 0,
+            'failed': 0,
+            'status': 'no_data'
          }
       
       logger.info(f"✓ Fetched {total_fetched} events")
       
-      # Send to Kafka
       logger.info("Step 2: Sending events to Kafka...")
       total_sent = send_events_to_kafka(events)
       failed = total_fetched - total_sent
       
       logger.info(f"✓ Sent {total_sent} events to Kafka")
       
-      # Summary
       end_time = datetime.utcnow()
       duration = (end_time - start_time).total_seconds()
       
@@ -260,25 +174,7 @@ def run_producer(once: bool = False) -> Dict:
          'error': str(e)
       }
 
-
-# ============================================================================
-# CONTINUOUS INGESTION (for testing outside Airflow)
-# ============================================================================
-
 def run_continuous(interval_seconds: int = API_FETCH_INTERVAL_SECONDS):
-   """
-   Run producer continuously at specified interval.
-   
-   This is for testing/development only. In production, Airflow
-   schedules the job at regular intervals.
-   
-   Args:
-      interval_seconds: Wait time between API calls
-   
-   Example:
-      # Run producer every 60 seconds indefinitely
-      run_continuous(interval_seconds=60)
-   """
    logger.info(f"Starting continuous ingestion (interval: {interval_seconds}s)")
    
    try:

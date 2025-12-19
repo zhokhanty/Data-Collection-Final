@@ -2,7 +2,7 @@ import json
 import logging
 from kafka import KafkaProducer, KafkaConsumer, KafkaAdminClient
 from kafka.errors import KafkaError
-from config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_TOPIC_RAW, KAFKA_CONSUMER_GROUP
+from config import KAFKA_BOOTSTRAP_SERVERS, KAFKA_CONSUMER_GROUP_CLEAN, KAFKA_CONSUMER_GROUP_RAW, KAFKA_TOPIC_RAW, KAFKA_CONSUMER_GROUP, KAFKA_TOPIC_CLEAN, KAFKA_TOPIC_ANALYTICS
 
 logger = logging.getLogger(__name__)
 
@@ -181,6 +181,23 @@ def create_topic(topic: str, num_partitions=1, replication_factor=1, bootstrap_s
         logger.error(f"Error creating topic: {e}")
         return False
 
+def get_kafka_config() -> dict:
+    """
+    Centralized Kafka configuration.
+
+    Returns:
+        dict with kafka configuration
+    """
+    return {
+        "bootstrap_servers": KAFKA_BOOTSTRAP_SERVERS,
+        "raw_topic": KAFKA_TOPIC_RAW,
+        "clean_topic": KAFKA_TOPIC_CLEAN,
+        "analytics_topic": KAFKA_TOPIC_ANALYTICS,
+        "consumer_groups": {
+            "raw": KAFKA_CONSUMER_GROUP_RAW,
+            "clean": KAFKA_CONSUMER_GROUP_CLEAN,
+        },
+    }
 
 if __name__ == '__main__':
     import logging
